@@ -4,6 +4,14 @@ This project is a complete, full-stack e-commerce application built to demonstra
 
 The backend is architected using a modular, route-based system, and it connects to a cloud-based Supabase (PostgreSQL) database for persistent data storage of products and orders.
 
+## ✨ Features
+
+*   **Dynamic Product Gallery:** Fetches and displays product data from a cloud database.
+*   **Detailed Product View:** Users can click on any product to see more details.
+*   **Secure Payment Flow:** Integration with Razorpay, ensuring no sensitive payment information ever touches the server.
+*   **Persistent Data:** Uses Supabase (PostgreSQL) to store product information and log all transactions.
+*   **Modular Backend:** Organized Node.js/Express backend with separated routes for scalability and maintenance.
+*   **Responsive Design:** A clean, 3-column grid layout that adapts to mobile and tablet screens.
 
 ## 🛠️ Tech Stack
 
@@ -19,38 +27,38 @@ This diagram illustrates the architecture and the sequence of interactions betwe
 ```mermaid
 sequenceDiagram
     participant User
-    participant React Frontend <br> (Client)
-    participant Node.js Backend <br> (Server)
-    participant Supabase DB <br> (PostgreSQL)
-    participant Razorpay Servers
+    participant "React Frontend<br>(Client)" as Frontend
+    participant "Node.js Backend<br>(Server)" as Backend
+    participant "Supabase DB<br>(PostgreSQL)" as DB
+    participant "Razorpay Servers" as Razorpay
 
     %% --- Initial Product Load ---
-    User->>React Frontend: Loads the page
-    React Frontend->>Node.js Backend: GET /api/products
-    Node.js Backend->>Supabase DB: SELECT * FROM products;
-    Supabase DB-->>Node.js Backend: Returns product list
-    Node.js Backend-->>React Frontend: Sends product list as JSON
-    React Frontend->>User: Renders product gallery
+    User->>Frontend: Loads the page
+    Frontend->>Backend: GET /api/products
+    Backend->>DB: SELECT * FROM products;
+    DB-->>Backend: Returns product list
+    Backend-->>Frontend: Sends product list as JSON
+    Frontend->>User: Renders product gallery
 
     %% --- User Initiates Payment ---
-    User->>React Frontend: Clicks "Pay Now" on a product
-    React Frontend->>Node.js Backend: POST /api/payments/create-order (with productId)
-    Note over Node.js Backend: Fetches price from DB using productId
-    Node.js Backend->>Razorpay Servers: Create Order Request (with API Keys)
-    Razorpay Servers-->>Node.js Backend: Returns official `order_id`
-    Note over Node.js Backend: Logs a 'pending' order to the Supabase DB
-    Node.js Backend-->>React Frontend: Sends back the `order_id`
+    User->>Frontend: Clicks "Pay Now" on a product
+    Frontend->>Backend: POST /api/payments/create-order (with productId)
+    Note over Backend: Fetches price from DB using productId
+    Backend->>Razorpay: Create Order Request (with API Keys)
+    Razorpay-->>Backend: Returns official `order_id`
+    Note over Backend: Logs a 'pending' order to the Supabase DB
+    Backend-->>Frontend: Sends back the `order_id`
     
     %% --- Razorpay Modal and Payment ---
-    React Frontend->>User: Opens Razorpay Modal with `order_id`
-    User->>Razorpay Servers: Enters payment details directly
-    Razorpay Servers-->>React Frontend: Calls `handler` function with payment `response`
+    Frontend->>User: Opens Razorpay Modal with `order_id`
+    User->>Razorpay: Enters payment details directly
+    Razorpay-->>Frontend: Calls `handler` function with payment `response`
 
     %% --- Final Verification Step ---
-    React Frontend->>Node.js Backend: POST /api/payments/verify-payment (with signature & IDs)
-    Note over Node.js Backend: Verifies signature with SECRET KEY
-    Note over Node.js Backend: If signature matches, payment is authentic
-    Node.js Backend->>Supabase DB: UPDATE orders SET status = 'succeeded', etc.
-    Supabase DB-->>Node.js Backend: Confirmation of update
-    Node.js Backend-->>React Frontend: Sends success confirmation ({success: true})
-    React Frontend->>User: Displays "Payment Succeeded!" message
+    Frontend->>Backend: POST /api/payments/verify-payment (with signature & IDs)
+    Note over Backend: Verifies signature with SECRET KEY
+    Note over Backend: If signature matches, payment is authentic
+    Backend->>DB: UPDATE orders SET status = 'succeeded', etc.
+    DB-->>Backend: Confirmation of update
+    Backend-->>Frontend: Sends success confirmation ({success: true})
+    Frontend->>User: Displays "Payment Succeeded!" message
