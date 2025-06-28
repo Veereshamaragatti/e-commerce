@@ -4,15 +4,6 @@ This project is a complete, full-stack e-commerce application built to demonstra
 
 The backend is architected using a modular, route-based system, and it connects to a cloud-based Supabase (PostgreSQL) database for persistent data storage of products and orders.
 
-## ✨ Features
-
-*   **Dynamic Product Gallery:** Fetches and displays product data from a cloud database.
-*   **Detailed Product View:** Users can click on any product to see more details.
-*   **Secure Payment Flow:** Integration with Razorpay, ensuring no sensitive payment information ever touches the server.
-*   **Persistent Data:** Uses Supabase (PostgreSQL) to store product information and log all transactions.
-*   **Modular Backend:** Organized Node.js/Express backend with separated routes for scalability and maintenance.
-*   **Responsive Design:** A clean, 3-column grid layout that adapts to mobile and tablet screens.
-
 ## 🛠️ Tech Stack
 
 *   **Frontend:** React, TypeScript, CSS
