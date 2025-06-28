@@ -27,10 +27,10 @@ This diagram illustrates the architecture and the sequence of interactions betwe
 ```mermaid
 sequenceDiagram
     participant User
-    participant "React Frontend<br>(Client)" as Frontend
-    participant "Node.js Backend<br>(Server)" as Backend
-    participant "Supabase DB<br>(PostgreSQL)" as DB
-    participant "Razorpay Servers" as Razorpay
+    participant Frontend (Client)
+    participant Backend (Server)
+    participant DB (PostgreSQL)
+    participant Razorpay
 
     %% --- Initial Product Load ---
     User->>Frontend: Loads the page
