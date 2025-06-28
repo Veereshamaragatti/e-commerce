@@ -1,31 +1,56 @@
-### System Design Flow
+# Full-Stack E-Commerce Demo
+
+This project is a complete, full-stack e-commerce application built to demonstrate a modern web development workflow. It features a dynamic product gallery, a detailed product view, and a secure payment flow integrated with the Razorpay payment gateway.
+
+The backend is architected using a modular, route-based system, and it connects to a cloud-based Supabase (PostgreSQL) database for persistent data storage of products and orders.
+
+
+## 🛠️ Tech Stack
+
+*   **Frontend:** React, TypeScript, CSS
+*   **Backend:** Node.js, Express, TypeScript
+*   **Database:** Supabase (PostgreSQL)
+*   **Payment Provider:** Razorpay (in Test Mode)
+
+## 📊 System Design & Architecture
+
+This diagram illustrates the architecture and the sequence of interactions between the different components of the system during a successful payment.
 
 ```mermaid
 sequenceDiagram
     participant User
-    participant React Frontend (Client)
-    participant Node.js Backend (Server)
+    participant React Frontend <br> (Client)
+    participant Node.js Backend <br> (Server)
+    participant Supabase DB <br> (PostgreSQL)
     participant Razorpay Servers
 
-    User->>React Frontend (Client): 1. Clicks "Pay" button
-    
-    React Frontend (Client)->>Node.js Backend (Server): 2. POST /create-order
-    Note over Node.js Backend (Server): Uses SECRET KEY
-    
-    Node.js Backend (Server)->>Razorpay Servers: 3. Create Order Request
-    Razorpay Servers-->>Node.js Backend (Server): 4. Returns official order_id
-    
-    Node.js Backend (Server)-->>React Frontend (Client): 5. Sends back order_id
-    
-    React Frontend (Client)->>User: 6. Opens Razorpay Modal
-    
-    User->>Razorpay Servers: 7. Enters payment details
-    Razorpay Servers-->>React Frontend (Client): 8. Calls `handler` with payment response (and signature)
+    %% --- Initial Product Load ---
+    User->>React Frontend: Loads the page
+    React Frontend->>Node.js Backend: GET /api/products
+    Node.js Backend->>Supabase DB: SELECT * FROM products;
+    Supabase DB-->>Node.js Backend: Returns product list
+    Node.js Backend-->>React Frontend: Sends product list as JSON
+    React Frontend->>User: Renders product gallery
 
-    React Frontend (Client)->>Node.js Backend (Server): 9. POST /verify-payment
-    Note over Node.js Backend (Server): Verifies signature with SECRET KEY
-
-    Node.js Backend (Server)-->>React Frontend (Client): 10. Sends final success confirmation
+    %% --- User Initiates Payment ---
+    User->>React Frontend: Clicks "Pay Now" on a product
+    React Frontend->>Node.js Backend: POST /api/payments/create-order (with productId)
+    Note over Node.js Backend: Fetches price from DB using productId
+    Node.js Backend->>Razorpay Servers: Create Order Request (with API Keys)
+    Razorpay Servers-->>Node.js Backend: Returns official `order_id`
+    Note over Node.js Backend: Logs a 'pending' order to the Supabase DB
+    Node.js Backend-->>React Frontend: Sends back the `order_id`
     
-    React Frontend (Client)->>User: 11. Displays "Payment Succeeded!"
-```
+    %% --- Razorpay Modal and Payment ---
+    React Frontend->>User: Opens Razorpay Modal with `order_id`
+    User->>Razorpay Servers: Enters payment details directly
+    Razorpay Servers-->>React Frontend: Calls `handler` function with payment `response`
+
+    %% --- Final Verification Step ---
+    React Frontend->>Node.js Backend: POST /api/payments/verify-payment (with signature & IDs)
+    Note over Node.js Backend: Verifies signature with SECRET KEY
+    Note over Node.js Backend: If signature matches, payment is authentic
+    Node.js Backend->>Supabase DB: UPDATE orders SET status = 'succeeded', etc.
+    Supabase DB-->>Node.js Backend: Confirmation of update
+    Node.js Backend-->>React Frontend: Sends success confirmation ({success: true})
+    React Frontend->>User: Displays "Payment Succeeded!" message
