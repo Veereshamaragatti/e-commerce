@@ -90,11 +90,21 @@ const CheckoutForm: React.FC = () => {
         ondismiss: async () => {
           setLoading(false);
           setError("Payment was cancelled by user.");
-          await fetch('http://localhost:4242/api/payments/verify-payment', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ razorpay_order_id: order.id }),
-          });
+          try {
+            const cancelRes = await fetch('http://localhost:4242/api/payments/cancel-payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ razorpay_order_id: order.id }),
+            });
+            const cancelData = await cancelRes.json();
+            if (!cancelData.success) {
+              console.error("Failed to update cancelled order:", cancelData.message);
+            } else {
+              console.log("Order cancelled successfully:", cancelData.message);
+            }
+          } catch (error) {
+            console.error("Error updating cancelled order:", error);
+          }
         }
       },
     };

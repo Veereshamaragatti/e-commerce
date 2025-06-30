@@ -52,9 +52,26 @@ export const createPaymentRouter = (razorpay: Razorpay, supabase: SupabaseClient
 
     router.post('/verify-payment', async (req: Request, res: Response) => {
         const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+        console.log("Received payment verification request:", { razorpay_order_id, razorpay_payment_id, razorpay_signature });
         const key_secret = process.env.RAZORPAY_KEY_SECRET!;
 
-        if (!razorpay_payment_id || !razorpay_signature) {
+        // Handle payment cancellation case - when only order_id is provided
+        if (razorpay_order_id && !razorpay_payment_id && !razorpay_signature) {
+            console.log("Processing payment cancellation for order:", razorpay_order_id);
+            const { error } = await supabase.from('orders').update({
+                status: 'cancelled'
+            }).eq('razorpay_order_id', razorpay_order_id);
+
+            if (error) {
+                console.error("Error updating cancelled order:", error);
+                res.status(500).json({ success: false, message: "Error updating cancelled order in database." });
+                return;
+            }
+            res.json({ success: true, message: "Order cancelled successfully." });
+            return;
+        }
+
+        if (!razorpay_payment_id || !razorpay_signature || !razorpay_order_id) {
             res.status(400).json({ success: false, message: "Payment details incomplete." });
             return;
         }
@@ -78,6 +95,47 @@ export const createPaymentRouter = (razorpay: Razorpay, supabase: SupabaseClient
         } else {
             res.status(400).json({ success: false, message: "Payment verification failed." });
         }
+    });
+
+    // Debug endpoint to check order status
+    router.get('/order-status/:orderId', async (req: Request, res: Response) => {
+        const { orderId } = req.params;
+        
+        const { data: order, error } = await supabase
+            .from('orders')
+            .select('*')
+            .eq('razorpay_order_id', orderId)
+            .single();
+            
+        if (error || !order) {
+            res.status(404).json({ error: "Order not found." });
+            return;
+        }
+        
+        res.json(order);
+    });
+
+    // Dedicated endpoint for payment cancellation
+    router.post('/cancel-payment', async (req: Request, res: Response) => {
+        const { razorpay_order_id } = req.body;
+        console.log("Processing payment cancellation for order:", razorpay_order_id);
+        
+        if (!razorpay_order_id) {
+            res.status(400).json({ success: false, message: "Order ID is required for cancellation." });
+            return;
+        }
+
+        const { error } = await supabase.from('orders').update({
+            status: 'cancelled'
+        }).eq('razorpay_order_id', razorpay_order_id);
+
+        if (error) {
+            console.error("Error updating cancelled order:", error);
+            res.status(500).json({ success: false, message: "Error updating cancelled order in database." });
+            return;
+        }
+        
+        res.json({ success: true, message: "Order cancelled successfully." });
     });
 
     return router;
